@@ -1,0 +1,16 @@
+/target
+/rust/target
+rust/resources/jassets/*
+rust/resources/deps/*
+!rust/resources/jassets/j4rs-*
+
+# Ignore Gradle project-specific cache directory
+java/.gradle
+
+# Ignore Gradle build output directory
+java/papkin/build
+java/papkin/bin
+java/papkin/.project
+java/build
+java/.idea
+.idea
