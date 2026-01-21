@@ -1,16 +1,52 @@
-/target
-/rust/target
+# Rust
+/rust/target/
+/target/
+
+# Rust resources
 rust/resources/jassets/*
-rust/resources/deps/*
 !rust/resources/jassets/j4rs-*
 
-# Ignore Gradle project-specific cache directory
-java/.gradle
+rust/resources/deps/*
 
-# Ignore Gradle build output directory
-java/papkin/build
-java/papkin/bin
-java/papkin/.project
-java/build
-java/.idea
-.idea
+# Gradle cache
+.gradle/
+java/.gradle/
+
+# Build outputs
+build/
+java/build/
+java/papkin/build/
+java/papkin/bin/
+
+# Keep Gradle wrapper
+!gradle/wrapper/gradle-wrapper.jar
+!java/gradle/wrapper/gradle-wrapper.jar
+
+# Never ignore source build dirs if any exist
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IntelliJ IDEA
+.idea/
+java/.idea/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+.DS_Store
