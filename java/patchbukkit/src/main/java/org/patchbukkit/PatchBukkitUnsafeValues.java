@@ -1,4 +1,4 @@
-package org.papkin;
+package org.patchbukkit;
 
 import com.google.common.collect.Multimap;
 import com.google.gson.JsonObject;
@@ -6,6 +6,10 @@ import io.papermc.paper.entity.EntitySerializationFlag;
 import io.papermc.paper.inventory.tooltip.TooltipContext;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.registry.RegistryKey;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BooleanSupplier;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.flattener.ComponentFlattener;
@@ -38,15 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BooleanSupplier;
-
 @SuppressWarnings("removal")
-public class PapkinUnsafeValues implements UnsafeValues {
+public class PatchBukkitUnsafeValues implements UnsafeValues {
 
-    public static final PapkinUnsafeValues INSTANCE = new PapkinUnsafeValues();
+    public static final PatchBukkitUnsafeValues INSTANCE =
+        new PatchBukkitUnsafeValues();
 
     // These are commonly used - implement first
     @Override
@@ -79,22 +79,33 @@ public class PapkinUnsafeValues implements UnsafeValues {
     }
 
     @Override
-    public @NotNull JsonObject serializeItemAsJson(@NotNull ItemStack itemStack) {
+    public @NotNull JsonObject serializeItemAsJson(
+        @NotNull ItemStack itemStack
+    ) {
         return null;
     }
 
     @Override
-    public @NotNull ItemStack deserializeItemFromJson(@NotNull JsonObject data) throws IllegalArgumentException {
+    public @NotNull ItemStack deserializeItemFromJson(@NotNull JsonObject data)
+        throws IllegalArgumentException {
         return null;
     }
 
     @Override
-    public byte @NotNull [] serializeEntity(@NotNull Entity entity, @NonNull @NotNull EntitySerializationFlag... serializationFlags) {
+    public byte@NotNull [] serializeEntity(
+        @NotNull Entity entity,
+        @NonNull @NotNull EntitySerializationFlag... serializationFlags
+    ) {
         return new byte[0];
     }
 
     @Override
-    public @NotNull Entity deserializeEntity(byte @NotNull [] data, @NotNull World world, boolean preserveUUID, boolean preservePassengers) {
+    public @NotNull Entity deserializeEntity(
+        byte@NotNull [] data,
+        @NotNull World world,
+        boolean preserveUUID,
+        boolean preservePassengers
+    ) {
         return null;
     }
 
@@ -114,29 +125,45 @@ public class PapkinUnsafeValues implements UnsafeValues {
     }
 
     @Override
-    public boolean isValidRepairItemStack(@NotNull ItemStack itemToBeRepaired, @NotNull ItemStack repairMaterial) {
+    public boolean isValidRepairItemStack(
+        @NotNull ItemStack itemToBeRepaired,
+        @NotNull ItemStack repairMaterial
+    ) {
         return false;
     }
 
     @Override
-    public boolean hasDefaultEntityAttributes(@NotNull NamespacedKey entityKey) {
+    public boolean hasDefaultEntityAttributes(
+        @NotNull NamespacedKey entityKey
+    ) {
         return false;
     }
 
     @Override
-    public @NotNull Attributable getDefaultEntityAttributes(@NotNull NamespacedKey entityKey) {
+    public @NotNull Attributable getDefaultEntityAttributes(
+        @NotNull NamespacedKey entityKey
+    ) {
         return null;
     }
 
     @Override
-    public @NotNull NamespacedKey getBiomeKey(RegionAccessor accessor, int x, int y, int z) {
+    public @NotNull NamespacedKey getBiomeKey(
+        RegionAccessor accessor,
+        int x,
+        int y,
+        int z
+    ) {
         return null;
     }
 
     @Override
-    public void setBiomeKey(RegionAccessor accessor, int x, int y, int z, NamespacedKey biomeKey) {
-
-    }
+    public void setBiomeKey(
+        RegionAccessor accessor,
+        int x,
+        int y,
+        int z,
+        NamespacedKey biomeKey
+    ) {}
 
     @Override
     public String getStatisticCriteriaKey(@NotNull Statistic statistic) {
@@ -144,17 +171,27 @@ public class PapkinUnsafeValues implements UnsafeValues {
     }
 
     @Override
-    public @Nullable Color getSpawnEggLayerColor(EntityType entityType, int layer) {
+    public @Nullable Color getSpawnEggLayerColor(
+        EntityType entityType,
+        int layer
+    ) {
         return null;
     }
 
     @Override
-    public LifecycleEventManager<Plugin> createPluginLifecycleEventManager(JavaPlugin plugin, BooleanSupplier registrationCheck) {
+    public LifecycleEventManager<Plugin> createPluginLifecycleEventManager(
+        JavaPlugin plugin,
+        BooleanSupplier registrationCheck
+    ) {
         return null;
     }
 
     @Override
-    public @NotNull List<Component> computeTooltipLines(@NotNull ItemStack itemStack, @NotNull TooltipContext tooltipContext, @Nullable Player player) {
+    public @NotNull List<Component> computeTooltipLines(
+        @NotNull ItemStack itemStack,
+        @NotNull TooltipContext tooltipContext,
+        @Nullable Player player
+    ) {
         return List.of();
     }
 
@@ -169,17 +206,22 @@ public class PapkinUnsafeValues implements UnsafeValues {
     }
 
     @Override
-    public @NotNull ItemStack deserializeStack(@NotNull Map<String, Object> args) {
+    public @NotNull ItemStack deserializeStack(
+        @NotNull Map<String, Object> args
+    ) {
         return null;
     }
 
     @Override
-    public @NotNull ItemStack deserializeItemHover(HoverEvent.@NotNull ShowItem itemHover) {
+    public @NotNull ItemStack deserializeItemHover(
+        HoverEvent.@NotNull ShowItem itemHover
+    ) {
         return null;
     }
 
     @Override
-    public void checkSupported(PluginDescriptionFile pdf) throws InvalidPluginException {
+    public void checkSupported(PluginDescriptionFile pdf)
+        throws InvalidPluginException {
         // Be lenient during development - accept most plugins
         String api = pdf.getAPIVersion();
         if (api != null && !isSupportedApiVersion(api)) {
@@ -208,7 +250,10 @@ public class PapkinUnsafeValues implements UnsafeValues {
     }
 
     @Override
-    public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(Material material, EquipmentSlot slot) {
+    public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(
+        Material material,
+        EquipmentSlot slot
+    ) {
         return null;
     }
 
@@ -243,12 +288,16 @@ public class PapkinUnsafeValues implements UnsafeValues {
     }
 
     @Override
-    public PotionType.InternalPotionData getInternalPotionData(NamespacedKey key) {
+    public PotionType.InternalPotionData getInternalPotionData(
+        NamespacedKey key
+    ) {
         return null;
     }
 
     @Override
-    public DamageSource.@NotNull Builder createDamageSourceBuilder(@NotNull DamageType damageType) {
+    public DamageSource.@NotNull Builder createDamageSourceBuilder(
+        @NotNull DamageType damageType
+    ) {
         return null;
     }
 
@@ -294,7 +343,12 @@ public class PapkinUnsafeValues implements UnsafeValues {
     }
 
     @Override
-    public Component resolveWithContext(Component component, CommandSender context, Entity scoreboardSubject, boolean bypassPermissions) throws IOException {
+    public Component resolveWithContext(
+        Component component,
+        CommandSender context,
+        Entity scoreboardSubject,
+        boolean bypassPermissions
+    ) throws IOException {
         return null;
     }
 

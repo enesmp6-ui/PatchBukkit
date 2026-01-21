@@ -1589,28 +1589,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "papkin"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "env_logger",
- "glob",
- "j4rs",
- "j4rs_derive",
- "log",
- "pumpkin",
- "pumpkin-api-macros",
- "pumpkin-util",
- "rust-embed",
- "serde",
- "serde-saphyr",
- "tokio",
- "walkdir",
- "zip",
-]
-
-[[package]]
 name = "parking_lot"
 version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1631,6 +1609,28 @@ dependencies = [
  "redox_syscall",
  "smallvec 1.15.1",
  "windows-link",
+]
+
+[[package]]
+name = "patchbukkit"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "env_logger",
+ "glob",
+ "j4rs",
+ "j4rs_derive",
+ "log",
+ "pumpkin",
+ "pumpkin-api-macros",
+ "pumpkin-util",
+ "rust-embed",
+ "serde",
+ "serde-saphyr",
+ "tokio",
+ "walkdir",
+ "zip",
 ]
 
 [[package]]

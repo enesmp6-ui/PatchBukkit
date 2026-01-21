@@ -1,4 +1,4 @@
-package org.papkin;
+package org.patchbukkit;
 
 import io.papermc.paper.ServerBuildInfo;
 import java.time.Instant;

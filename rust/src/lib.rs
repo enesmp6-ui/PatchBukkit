@@ -12,7 +12,7 @@ pub mod plugin;
 use directories::setup_directories;
 use java::{
     jar::discover_jar_files,
-    jvm::{initialize_jvm, setup_papkin_server},
+    jvm::{initialize_jvm, setup_patchbukkit_server},
     resources::{cleanup_stale_files, sync_embedded_resources},
 };
 
@@ -20,7 +20,7 @@ use crate::{java::jar::read_configs_from_jar, plugin::manager::PluginManager};
 
 async fn on_load_inner(_plugin: &mut MyPlugin, server: Arc<Context>) -> Result<(), String> {
     server.init_log();
-    log::info!("Starting Papkin");
+    log::info!("Starting PatchBukkit");
 
     // Setup directories
     let dirs = setup_directories(&server)?;
@@ -53,7 +53,10 @@ async fn on_load_inner(_plugin: &mut MyPlugin, server: Arc<Context>) -> Result<(
                 ),
             },
             Err(err) => {
-                log::error!("Failed to read configs from papkin plugin jar: {}", err);
+                log::error!(
+                    "Failed to read configs from PatchBukkit plugin jar: {}",
+                    err
+                );
             }
         }
     }
@@ -66,17 +69,17 @@ async fn on_load_inner(_plugin: &mut MyPlugin, server: Arc<Context>) -> Result<(
     cleanup_stale_files(&dirs.j4rs);
     sync_embedded_resources(&dirs.j4rs)?;
 
-    // Initialize JVM and Papkin server
+    // Initialize JVM and PatchBukkit server
     let jvm = initialize_jvm(classpath_entries, &dirs.j4rs)?;
-    setup_papkin_server(&jvm)?;
+    setup_patchbukkit_server(&jvm)?;
 
     plugin_manager
         .load_all_plugins(&jvm)
-        .map_err(|err| format!("Failed to load papkin plugins: {}", err))?;
+        .map_err(|err| format!("Failed to load PatchBukkit plugins: {}", err))?;
 
     plugin_manager
         .enable_all_plugins(&jvm)
-        .map_err(|err| format!("Failed to enable papkin plugins: {}", err))?;
+        .map_err(|err| format!("Failed to enable PatchBukkit plugins: {}", err))?;
 
     Ok(())
 }

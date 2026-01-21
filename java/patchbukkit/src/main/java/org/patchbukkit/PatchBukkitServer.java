@@ -1,4 +1,4 @@
-package org.papkin;
+package org.patchbukkit;
 
 import com.destroystokyo.paper.entity.ai.MobGoals;
 import io.papermc.paper.ban.BanListType;
@@ -84,7 +84,7 @@ import org.bukkit.util.CachedServerIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PapkinServer implements Server {
+public class PatchBukkitServer implements Server {
 
     private final String serverName =
         io.papermc.paper.ServerBuildInfo.buildInfo().brandName();
@@ -1537,7 +1537,7 @@ public class PapkinServer implements Server {
 
     @Override
     public @NotNull UnsafeValues getUnsafe() {
-        return PapkinUnsafeValues.INSTANCE;
+        return PatchBukkitUnsafeValues.INSTANCE;
     }
 
     @Override

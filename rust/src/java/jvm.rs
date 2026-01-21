@@ -15,15 +15,15 @@ pub fn initialize_jvm(
     Ok(jvm)
 }
 
-pub fn setup_papkin_server(jvm: &Jvm) -> Result<(), String> {
-    let papkin_server = jvm
-        .create_instance("org.papkin.PapkinServer", InvocationArg::empty())
-        .map_err(|err| format!("Failed to create PapkinServer instance: {:?}", err))?;
+pub fn setup_patchbukkit_server(jvm: &Jvm) -> Result<(), String> {
+    let patchbukkit_server = jvm
+        .create_instance("org.patchbukkit.PatchBukkitServer", InvocationArg::empty())
+        .map_err(|err| format!("Failed to create PatchBukkitServer instance: {:?}", err))?;
 
     jvm.invoke_static(
         "org.bukkit.Bukkit",
         "setServer",
-        &[InvocationArg::from(papkin_server)],
+        &[InvocationArg::from(patchbukkit_server)],
     )
     .map_err(|err| format!("Failed to set Bukkit server: {:?}", err))?;
 

@@ -1,4 +1,4 @@
-package org.papkin.loader;
+package org.patchbukkit.loader;
 
 import io.papermc.paper.plugin.provider.util.ProviderUtil;
 import java.io.File;

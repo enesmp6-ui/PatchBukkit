@@ -1,4 +1,4 @@
-package org.papkin;
+package org.patchbukkit;
 
 import java.io.IOException;
 import java.io.InputStream;

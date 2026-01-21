@@ -15,8 +15,8 @@ java/.gradle/
 # Build outputs
 build/
 java/build/
-java/papkin/build/
-java/papkin/bin/
+java/patchbukkit/build/
+java/patchbukkit/bin/
 
 # Keep Gradle wrapper
 !gradle/wrapper/gradle-wrapper.jar

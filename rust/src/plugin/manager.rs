@@ -134,11 +134,15 @@ impl PluginManager {
             match result {
                 Ok(_) => {
                     plugin.state = PluginState::Enabled;
-                    log::info!("Enabled papkin plugin: {}", plugin.name);
+                    log::info!("Enabled PatchBukkit plugin: {}", plugin.name);
                 }
                 Err(e) => {
                     plugin.state = PluginState::Errored;
-                    log::error!("Failed to enable papkin plugin {}: {:?}", plugin.name, e);
+                    log::error!(
+                        "Failed to enable PatchBukkit plugin {}: {:?}",
+                        plugin.name,
+                        e
+                    );
                 }
             }
         }
@@ -146,8 +150,10 @@ impl PluginManager {
     }
 
     pub fn load_all_plugins(&mut self, jvm: &Jvm) -> Result<()> {
-        let loader =
-            jvm.create_instance("org.papkin.loader.PluginLoader", InvocationArg::empty())?;
+        let loader = jvm.create_instance(
+            "org.patchbukkit.loader.PluginLoader",
+            InvocationArg::empty(),
+        )?;
         for plugin in &mut self.plugins {
             let result = jvm.invoke(
                 &loader,
@@ -159,11 +165,11 @@ impl PluginManager {
                 Ok(instance) => {
                     plugin.instance = Some(instance);
                     plugin.state = PluginState::Loaded;
-                    log::info!("Loaded papkin plugin: {}", plugin.name);
+                    log::info!("Loaded PatchBukkit plugin: {}", plugin.name);
                 }
                 Err(e) => {
                     plugin.state = PluginState::Errored;
-                    log::error!("Failed to load papkin plugin {}: {:?}", plugin.name, e);
+                    log::error!("Failed to load PatchBukkit plugin {}: {:?}", plugin.name, e);
                 }
             }
         }

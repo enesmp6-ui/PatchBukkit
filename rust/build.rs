@@ -129,14 +129,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    if !Path::new("../java/papkin/build/libs/papkin.jar").exists() {
+    if !Path::new("../java/patchbukkit/build/libs/patchbukkit.jar").exists() {
         panic!(
-            "Failed to find papkin.jar, build the java library first by running `gradle build` in the java directory!"
+            "Failed to find patchbukkit.jar, build the java library first by running `gradle build` in the java directory!"
         );
     }
 
     jvm.deploy_artifact(&LocalJarArtifact::new(
-        "../java/papkin/build/libs/papkin.jar",
+        "../java/patchbukkit/build/libs/patchbukkit.jar",
     ))
     .unwrap();
 
