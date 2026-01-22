@@ -150,13 +150,9 @@ impl PluginManager {
     }
 
     pub fn load_all_plugins(&mut self, jvm: &Jvm) -> Result<()> {
-        let loader = jvm.create_instance(
-            "org.patchbukkit.loader.PluginLoader",
-            InvocationArg::empty(),
-        )?;
         for plugin in &mut self.plugins {
-            let result = jvm.invoke(
-                &loader,
+            let result = jvm.invoke_static(
+                "org.patchbukkit.loader.PatchBukkitPluginLoader",
                 "createPlugin",
                 &[
                     InvocationArg::try_from(&plugin.path.to_string_lossy().to_string())?,
