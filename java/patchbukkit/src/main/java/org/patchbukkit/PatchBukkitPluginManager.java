@@ -98,9 +98,7 @@ public class PatchBukkitPluginManager implements PluginManager {
         @NotNull Listener listener,
         @NotNull Plugin plugin
     ) {
-        throw new UnsupportedOperationException(
-            "Unimplemented method 'registerEvents'"
-        );
+        NativeCallbacks.getInstance().doRegisterCallback(listener, plugin);
     }
 
     @Override

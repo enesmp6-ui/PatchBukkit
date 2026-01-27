@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use j4rs::Jvm;
+use j4rs::{InvocationArg, Jvm};
 use pumpkin::plugin::Context;
 use pumpkin_api_macros::{plugin_impl, plugin_method};
 
@@ -74,6 +74,31 @@ async fn on_load_inner(plugin: &mut PatchBukkitPlugin, server: Arc<Context>) -> 
     // Initialize JVM and PatchBukkit server
     let jvm = initialize_jvm(&dirs.j4rs)?;
     setup_patchbukkit_server(&jvm)?;
+
+    let i = jvm
+        .create_instance("org.patchbukkit.NativeCallbacks", InvocationArg::empty())
+        .map_err(|err| err.to_string())?;
+    let r = jvm.init_callback_channel(&i).unwrap();
+
+    std::thread::spawn(move || {
+        if let Err(e) = Jvm::attach_thread() {
+            log::error!("Failed to attach callback thread to JVM: {}", e);
+            return;
+        }
+
+        loop {
+            match r.rx().recv() {
+                Ok(ret) => {
+                    plugin.plugin_manager.add_listener();
+                    log::info!("Received callback: {:?}", ret.class_name());
+                }
+                Err(e) => {
+                    log::error!("Callback channel closed: {}", e);
+                    break;
+                }
+            }
+        }
+    });
 
     plugin
         .plugin_manager
