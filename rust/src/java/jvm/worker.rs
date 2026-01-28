@@ -191,10 +191,11 @@ impl JvmWorker {
                             Ok(instance) => {
                                 let (sender, receiver) = oneshot::channel();
                                 if command_tx
-                                    .blocking_send(JvmCommand::JavaCallback {
+                                    .send(JvmCommand::JavaCallback {
                                         instance,
                                         respond_to: sender,
                                     })
+                                    .await
                                     .is_err()
                                 {
                                     log::info!(
