@@ -3,7 +3,7 @@ use std::{path::PathBuf, str::FromStr, sync::Arc};
 use anyhow::bail;
 use j4rs::{Instance, InvocationArg, Jvm, JvmBuilder};
 use pumpkin::{net::bedrock::play, plugin::Context, server::Server};
-use pumpkin_util::text::TextComponent;
+use pumpkin_util::text::{TextComponent, color::NamedColor};
 use tokio::sync::{mpsc, oneshot};
 
 use crate::{
@@ -280,7 +280,7 @@ impl JvmWorker {
                     .get_player_by_uuid(uuid::Uuid::from_str(&uuid).unwrap())
                 {
                     player
-                        .send_system_message(&TextComponent::text(message))
+                        .send_system_message(&TextComponent::from_legacy_string(&message))
                         .await;
                 }
             }

@@ -1963,7 +1963,7 @@ dependencies = [
 [[package]]
 name = "pumpkin"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "arc-swap",
  "base64",
@@ -2006,7 +2006,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-api-macros"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "proc-macro-error2",
  "proc-macro2",
@@ -2017,7 +2017,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-config"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "log",
  "pumpkin-util",
@@ -2029,7 +2029,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-data"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "crc-fast",
  "heck",
@@ -2049,7 +2049,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-inventory"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "crossbeam-utils",
  "log",
@@ -2064,7 +2064,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-macros"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "proc-macro-error2",
  "proc-macro2",
@@ -2076,7 +2076,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-nbt"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "bytes",
  "cesu8",
@@ -2088,7 +2088,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-protocol"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "aes",
  "async-compression",
@@ -2110,7 +2110,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-util"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "base64",
  "bytes",
@@ -2135,7 +2135,7 @@ dependencies = [
 [[package]]
 name = "pumpkin-world"
 version = "0.1.0-dev+1.21.11"
-source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#d64f538138b4c2595215849daaf881fc666410e3"
+source = "git+https://github.com/Pumpkin-MC/Pumpkin.git?branch=master#72bd4dfbef6326063b1bc0752e2789402f5c9197"
 dependencies = [
  "bitflags",
  "bytes",
@@ -3582,18 +3582,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.36"
+version = "0.8.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dafd85c832c1b68bbb4ec0c72c7f6f4fc5179627d2bc7c26b30e4c0cc11e76cc"
+checksum = "7456cf00f0685ad319c5b1693f291a650eaf345e941d082fc4e03df8a03996ac"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.36"
+version = "0.8.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cb7e4e8436d9db52fbd6625dbf2f45243ab84994a72882ec8227b99e72b439a"
+checksum = "1328722bbf2115db7e19d69ebcc15e795719e2d66b60827c6a69a117365e37a0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3710,9 +3710,9 @@ checksum = "40990edd51aae2c2b6907af74ffb635029d5788228222c4bb811e9351c0caad3"
 
 [[package]]
 name = "zmij"
-version = "1.0.17"
+version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02aae0f83f69aafc94776e879363e9771d7ecbffe2c7fbb6c14c5e00dfe88439"
+checksum = "1966f8ac2c1f76987d69a74d0e0f929241c10e78136434e3be70ff7f58f64214"
 
 [[package]]
 name = "zopfli"

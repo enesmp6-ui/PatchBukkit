@@ -31,7 +31,9 @@ impl CommandExecutor for JavaCommandExecutor {
             let sender = match sender {
                 pumpkin::command::CommandSender::Rcon(mutex) => todo!(),
                 pumpkin::command::CommandSender::Console => SimpleCommandSender::Console,
-                pumpkin::command::CommandSender::Player(player) => SimpleCommandSender::Player(player.gameprofile.id.to_string()),
+                pumpkin::command::CommandSender::Player(player) => {
+                    SimpleCommandSender::Player(player.gameprofile.id.to_string())
+                }
                 pumpkin::command::CommandSender::CommandBlock(block_entity, world) => todo!(),
             };
             self.command_tx
