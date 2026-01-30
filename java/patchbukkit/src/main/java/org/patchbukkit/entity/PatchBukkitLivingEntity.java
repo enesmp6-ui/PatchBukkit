@@ -45,11 +45,12 @@ import io.papermc.paper.world.damagesource.CombatTracker;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 
+@SuppressWarnings({ "deprecation", "removal" })
 public class PatchBukkitLivingEntity
     extends PatchBukkitEntity
     implements LivingEntity {
 
-    public PatchBukkitLivingEntity(UUID uuid, 
+    public PatchBukkitLivingEntity(UUID uuid,
         String name) {
         super(uuid, name);
     }

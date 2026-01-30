@@ -20,3 +20,10 @@ java {
         languageVersion = JavaLanguageVersion.of(21)
     }
 }
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(listOf(
+        "-Xlint:-removal",
+        "-Xlint:-deprecation"
+    ))
+}

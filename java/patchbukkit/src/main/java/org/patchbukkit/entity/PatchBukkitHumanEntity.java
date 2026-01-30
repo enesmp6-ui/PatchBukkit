@@ -48,7 +48,6 @@ import org.checkerframework.checker.index.qual.NonNegative;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
-import org.patchbukkit.PatchBukkitServer;
 
 import com.destroystokyo.paper.block.TargetBlockInfo;
 import com.destroystokyo.paper.block.TargetBlockInfo.FluidMode;
@@ -58,11 +57,12 @@ import io.papermc.paper.world.damagesource.CombatTracker;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.util.TriState;
 
+@SuppressWarnings({ "deprecation", "removal" })
 public class PatchBukkitHumanEntity
     extends PatchBukkitLivingEntity
     implements HumanEntity {
 
-    public PatchBukkitHumanEntity(UUID uuid, 
+    public PatchBukkitHumanEntity(UUID uuid,
         String name) {
         super(uuid, name);
     }

@@ -33,7 +33,6 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.patchbukkit.PatchBukkitServer;
 
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentType.Valued;
@@ -49,7 +48,7 @@ public class PatchBukkitEntity implements Entity {
     private final String name;
 
     public PatchBukkitEntity(
-        UUID uuid, 
+        UUID uuid,
         String name
     ) {
         this.uuid = uuid;

@@ -75,19 +75,20 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.util.TriState;
 import net.md_5.bungee.api.chat.BaseComponent;
 
+@SuppressWarnings({ "deprecation", "removal" })
 public class PatchBukkitPlayer
     extends PatchBukkitHumanEntity
     implements Player {
 
    public PatchBukkitPlayer(UUID uuid, String name) {
-        super(uuid, name); 
+        super(uuid, name);
     }
 
     @Override
     public Player.Spigot spigot() {
         throw new UnsupportedOperationException("Unimplemented method 'spigot'");
     }
-    
+
     @Override
     public boolean isConversing() {
         // TODO Auto-generated method stub
