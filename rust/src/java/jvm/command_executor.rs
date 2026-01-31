@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use j4rs::{Instance, InvocationArg, Jvm};
+use j4rs::Instance;
 use pumpkin::command::CommandExecutor;
 use tokio::sync::{mpsc, oneshot};
 

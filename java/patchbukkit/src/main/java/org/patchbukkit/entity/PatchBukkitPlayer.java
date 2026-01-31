@@ -60,8 +60,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
-import org.patchbukkit.NativeCallbacks;
 import org.patchbukkit.PatchBukkitServer;
+import org.patchbukkit.bridge.NativePatchBukkit;
 
 import com.destroystokyo.paper.ClientOption;
 import com.destroystokyo.paper.Title;
@@ -97,7 +97,7 @@ public class PatchBukkitPlayer
             sender = this.getUniqueId();
         }
 
-        NativeCallbacks.getInstance().sendMessage(sender, message);
+        NativePatchBukkit.sendMessage(uuid, message);
     }
 
     @Override

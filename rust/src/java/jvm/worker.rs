@@ -1,16 +1,15 @@
-use std::{path::PathBuf, str::FromStr, sync::Arc};
+use std::{path::PathBuf, sync::Arc};
 
-use anyhow::bail;
-use j4rs::{Instance, InvocationArg, Jvm, JvmBuilder};
-use pumpkin::{net::bedrock::play, plugin::Context, server::Server};
-use pumpkin_util::text::{TextComponent, color::NamedColor};
-use tokio::sync::{mpsc, oneshot};
+use j4rs::{InvocationArg, Jvm, JvmBuilder};
+use pumpkin::plugin::Context;
+use tokio::sync::mpsc;
 
 use crate::{
     events::Event,
     java::{
         jar::read_configs_from_jar,
         jvm::commands::{JvmCommand, LoadPluginResult},
+        native_callbacks::{init_callback_context, initialize_callbacks},
     },
     plugin::{event_manager::EventManager, manager::PluginManager},
 };
@@ -49,15 +48,10 @@ impl JvmWorker {
                     respond_to,
                     context,
                 } => {
+                    init_callback_context(context.clone(), tokio::runtime::Handle::current())
+                        .unwrap();
                     self.context = Some(context);
                     let result = self.initialize_jvm(&j4rs_path);
-                    let _ = respond_to.send(result);
-                }
-                JvmCommand::JavaCallback {
-                    instance,
-                    respond_to,
-                } => {
-                    let result = self.process_java_callback(instance).await;
                     let _ = respond_to.send(result);
                 }
                 JvmCommand::LoadPlugin {
@@ -253,122 +247,14 @@ impl JvmWorker {
         log::info!("JVM worker thread exited");
     }
 
-    async fn process_java_callback(&mut self, instance: Instance) -> anyhow::Result<()> {
-        let jvm = match self.jvm {
-            Some(ref jvm) => jvm,
-            None => bail!("JVM not initialized"),
-        };
-
-        let result = jvm.invoke(&instance, "getCallbackName", InvocationArg::empty())?;
-
-        let callback_name: String = jvm.to_rust(result)?;
-
-        match callback_name.as_str() {
-            "REGISTER_EVENT_CALLBACK" => {
-                let listener = jvm.cast(
-                    &jvm.invoke(&instance, "getArg", &[&InvocationArg::try_from(0_i32)?])?,
-                    "org.bukkit.event.Listener",
-                )?;
-                let plugin_instance = jvm.cast(
-                    &jvm.invoke(&instance, "getArg", &[&InvocationArg::try_from(1_i32)?])?,
-                    "org.bukkit.plugin.Plugin",
-                )?;
-                let plugin_name: String = jvm.to_rust(jvm.invoke(
-                    &plugin_instance,
-                    "getName",
-                    InvocationArg::empty(),
-                )?)?;
-
-                match self.plugin_manager.plugins.get_mut(&plugin_name) {
-                    Some(rust_plugin) => rust_plugin
-                        .listeners
-                        .insert("listener_name".to_string(), listener),
-                    None => todo!(),
-                };
-            }
-            "SEND_MESSAGE" => {
-                let uuid: String = jvm.to_rust(jvm.cast(
-                    &jvm.invoke(&instance, "getArg", &[&InvocationArg::try_from(0_i32)?])?,
-                    "java.lang.String",
-                )?)?;
-
-                let message: String = jvm.to_rust(jvm.cast(
-                    &jvm.invoke(&instance, "getArg", &[&InvocationArg::try_from(1_i32)?])?,
-                    "java.lang.String",
-                )?)?;
-
-                if let Some(player) = self
-                    .context
-                    .as_ref()
-                    .unwrap()
-                    .server
-                    .get_player_by_uuid(uuid::Uuid::from_str(&uuid).unwrap())
-                {
-                    player
-                        .send_system_message(&TextComponent::from_legacy_string(&message))
-                        .await;
-                }
-            }
-            _ => log::warn!("Received unknown callback: {:?}", callback_name),
-        }
-
-        Ok(())
-    }
-
     fn initialize_jvm(&mut self, j4rs_path: &PathBuf) -> anyhow::Result<()> {
         log::info!("Initializing JVM with path: {:?}", j4rs_path);
 
         let jvm = JvmBuilder::new().with_base_path(j4rs_path).build()?;
 
+        initialize_callbacks(&jvm)?;
+
         setup_patchbukkit_server(&jvm)?;
-
-        let callback_instance =
-            jvm.create_instance("org.patchbukkit.NativeCallbacks", InvocationArg::empty())?;
-
-        let callback_receiver = jvm.init_callback_channel(&callback_instance)?;
-
-        let command_tx = self.command_tx.clone();
-        std::thread::Builder::new()
-            .name("patchbukkit-jvm-callbacks".to_string())
-            .spawn(move || {
-                let thread_runtime = tokio::runtime::Builder::new_current_thread()
-                    .enable_all()
-                    .build()
-                    .unwrap();
-
-                thread_runtime.block_on(async {
-                    loop {
-                        match callback_receiver.rx().recv() {
-                            Ok(instance) => {
-                                let (sender, receiver) = oneshot::channel();
-                                if command_tx
-                                    .send(JvmCommand::JavaCallback {
-                                        instance,
-                                        respond_to: sender,
-                                    })
-                                    .await
-                                    .is_err()
-                                {
-                                    log::info!(
-                                        "Command channel closed, stopping callback forwarder"
-                                    );
-                                    break;
-                                }
-
-                                match receiver.await {
-                                    Ok(Ok(_)) => (),
-                                    Ok(Err(e)) => log::error!("{}", e),
-                                    Err(e) => log::error!("Callback failed: {}", e),
-                                }
-                            }
-                            Err(e) => {
-                                log::error!("Java callback channel closed: {}", e);
-                                break;
-                            }
-                        }
-                    }
-                });
-            })?;
 
         self.jvm = Some(jvm);
 

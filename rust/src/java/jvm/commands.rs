@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Result;
 use j4rs::Instance;
-use pumpkin::{command::CommandSender, plugin::Context, server::Server};
+use pumpkin::plugin::Context;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::{events::Event, java::jvm::command_executor::SimpleCommandSender};
@@ -24,10 +24,6 @@ pub enum JvmCommand {
         j4rs_path: PathBuf,
         respond_to: oneshot::Sender<Result<()>>,
         context: Arc<Context>,
-    },
-    JavaCallback {
-        instance: Instance,
-        respond_to: oneshot::Sender<Result<()>>,
     },
     LoadPlugin {
         plugin_path: PathBuf,
