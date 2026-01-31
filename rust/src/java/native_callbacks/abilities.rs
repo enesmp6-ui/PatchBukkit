@@ -1,9 +1,9 @@
-use std::ffi::{CStr, c_char};
+use std::ffi::c_char;
 
 use pumpkin::entity::player::Abilities;
 use tokio::sync::MutexGuard;
 
-use crate::java::native_callbacks::CALLBACK_CONTEXT;
+use crate::java::native_callbacks::{CALLBACK_CONTEXT, utils::get_string};
 
 #[repr(C)]
 pub struct AbilitiesFFI {
@@ -34,7 +34,7 @@ pub extern "C" fn rust_set_abilities(
     uuid_ptr: *const c_char,
     abilities: *mut AbilitiesFFI,
 ) -> bool {
-    let uuid_str = unsafe { CStr::from_ptr(uuid_ptr).to_string_lossy().into_owned() };
+    let uuid_str = get_string(uuid_ptr);
     if let Some(ctx) = CALLBACK_CONTEXT.get() {
         let uuid = uuid::Uuid::parse_str(&uuid_str).unwrap();
         let player = ctx.plugin_context.server.get_player_by_uuid(uuid);
@@ -62,7 +62,7 @@ pub extern "C" fn rust_set_abilities(
 }
 
 pub extern "C" fn rust_get_abilities(uuid_ptr: *const c_char, out: *mut AbilitiesFFI) -> bool {
-    let uuid_str = unsafe { CStr::from_ptr(uuid_ptr).to_string_lossy().into_owned() };
+    let uuid_str = get_string(uuid_ptr);
     if let Some(ctx) = CALLBACK_CONTEXT.get() {
         let uuid = uuid::Uuid::parse_str(&uuid_str).unwrap();
         let player = ctx.plugin_context.server.get_player_by_uuid(uuid);

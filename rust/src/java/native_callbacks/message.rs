@@ -1,14 +1,13 @@
-use std::ffi::{CStr, c_char};
+use std::ffi::c_char;
 
 use pumpkin_util::text::TextComponent;
 
-use crate::java::native_callbacks::CALLBACK_CONTEXT;
+use crate::java::native_callbacks::{CALLBACK_CONTEXT, utils::get_string};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn rust_send_message(uuid_ptr: *const c_char, message_ptr: *const c_char) {
-    // This into_owned might not seem to make any sense, but it's necessary to ensure that the string is owned by the Rust code and can move into the runtime.
-    let uuid_str = unsafe { CStr::from_ptr(uuid_ptr).to_string_lossy().into_owned() };
-    let message = unsafe { CStr::from_ptr(message_ptr).to_string_lossy().into_owned() };
+    let uuid_str = get_string(uuid_ptr);
+    let message = get_string(message_ptr);
 
     if let Some(ctx) = CALLBACK_CONTEXT.get() {
         let uuid = uuid::Uuid::parse_str(&uuid_str).unwrap();

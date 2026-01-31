@@ -15,6 +15,7 @@ public class NativePatchBukkit {
     private static MethodHandle registerEventNative;
     private static MethodHandle getAbilitiesNative;
     private static MethodHandle setAbilitiesNative;
+    private static MethodHandle getLocationNative;
 
     // Struct layout matching Rust's #[repr(C)] AbilitiesFFI
     private static final StructLayout ABILITIES_LAYOUT = MemoryLayout.structLayout(
@@ -43,6 +44,25 @@ public class NativePatchBukkit {
         MemoryLayout.PathElement.groupElement("fly_speed"));
     private static final VarHandle WALK_SPEED = ABILITIES_LAYOUT.varHandle(
         MemoryLayout.PathElement.groupElement("walk_speed"));
+
+
+    // Struct layout for Vec3
+    private static final StructLayout VEC3_LAYOUT = MemoryLayout.structLayout(
+        ValueLayout.JAVA_DOUBLE.withName("x"),
+        ValueLayout.JAVA_DOUBLE.withName("y"),
+        ValueLayout.JAVA_DOUBLE.withName("z")
+    );
+
+    // VarHandles for Vec3 fields
+    private static final VarHandle VEC3_X = VEC3_LAYOUT.varHandle(
+        MemoryLayout.PathElement.groupElement("x"));
+    private static final VarHandle VEC3_Y = VEC3_LAYOUT.varHandle(
+        MemoryLayout.PathElement.groupElement("y"));
+    private static final VarHandle VEC3_Z = VEC3_LAYOUT.varHandle(
+        MemoryLayout.PathElement.groupElement("z"));
+
+    public record Vec3(double x, double y, double z) {}
+
 
     /**
      * Java record to hold player abilities.
@@ -89,7 +109,7 @@ public class NativePatchBukkit {
     /**
      * Called from Rust during initialization to register native function pointers.
      */
-    public static void initCallbacks(long sendMessageAddr, long registerEventAddr, long getAbilitiesAddr, long setAbilitiesAddr) {
+    public static void initCallbacks(long sendMessageAddr, long registerEventAddr, long getAbilitiesAddr, long setAbilitiesAddr, long getLocationAddr) {
         // void rust_send_message(const char* uuid, const char* message)
         sendMessageNative = LINKER.downcallHandle(
             MemorySegment.ofAddress(sendMessageAddr),
@@ -119,6 +139,16 @@ public class NativePatchBukkit {
                 ValueLayout.JAVA_BOOLEAN,  // return type
                 ValueLayout.ADDRESS,        // uuid string
                 ValueLayout.ADDRESS         // pointer to AbilitiesFFI
+            )
+        );
+
+        // bool rust_get_location(const char* uuid, Vec3FFI* out)
+        getLocationNative = LINKER.downcallHandle(
+            MemorySegment.ofAddress(getLocationAddr),
+            FunctionDescriptor.of(
+                ValueLayout.JAVA_BOOLEAN,  // return type
+                ValueLayout.ADDRESS,        // uuid string
+                ValueLayout.ADDRESS         // out pointer to Vec3FFI
             )
         );
     }
@@ -205,4 +235,30 @@ public class NativePatchBukkit {
         }
     }
 
+    /**
+     * Get a player's location by UUID.
+     *
+     * @param uuid The player's UUID
+     * @return The player's position, or null if player not found
+     */
+    public static Vec3 getLocation(UUID uuid) {
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment uuidStr = arena.allocateFrom(uuid.toString());
+            MemorySegment outStruct = arena.allocate(VEC3_LAYOUT);
+
+            boolean success = (boolean) getLocationNative.invokeExact(uuidStr, outStruct);
+
+            if (!success) {
+                return null;
+            }
+
+            return new Vec3(
+                (double) VEC3_X.get(outStruct, 0L),
+                (double) VEC3_Y.get(outStruct, 0L),
+                (double) VEC3_Z.get(outStruct, 0L)
+            );
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to call native getLocation", t);
+        }
+    }
 }

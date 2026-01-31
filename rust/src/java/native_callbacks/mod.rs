@@ -6,7 +6,9 @@ use pumpkin::plugin::Context;
 
 pub mod abilities;
 pub mod events;
+pub mod location;
 pub mod message;
+pub mod utils;
 
 static CALLBACK_CONTEXT: OnceLock<CallbackContext> = OnceLock::new();
 
@@ -35,6 +37,7 @@ pub fn initialize_callbacks(jvm: &Jvm) -> Result<()> {
     let register_event_addr = events::rust_register_event as *const () as i64;
     let get_abilities_addr = abilities::rust_get_abilities as *const () as i64;
     let set_abilities_addr = abilities::rust_set_abilities as *const () as i64;
+    let get_location_addr = location::rust_get_location as *const () as i64;
 
     jvm.invoke_static(
         "org.patchbukkit.bridge.NativePatchBukkit",
@@ -44,6 +47,7 @@ pub fn initialize_callbacks(jvm: &Jvm) -> Result<()> {
             InvocationArg::try_from(register_event_addr)?.into_primitive()?,
             InvocationArg::try_from(get_abilities_addr)?.into_primitive()?,
             InvocationArg::try_from(set_abilities_addr)?.into_primitive()?,
+            InvocationArg::try_from(get_location_addr)?.into_primitive()?,
         ],
     )?;
 

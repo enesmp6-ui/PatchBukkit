@@ -37,6 +37,7 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.patchbukkit.bridge.NativePatchBukkit;
 
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentType.Valued;
@@ -259,14 +260,19 @@ public class PatchBukkitEntity implements Entity {
 
     @Override
     public @NotNull Location getLocation() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getLocation'");
+        var loc = NativePatchBukkit.getLocation(this.uuid);
+        return new Location(this.getWorld(), loc.x(), loc.y(), loc.z());
     }
 
     @Override
     public @Nullable Location getLocation(@Nullable Location loc) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getLocation'");
+        if (loc == null) {
+            return this.getLocation();
+        }
+
+        var newLoc = this.getLocation();
+        loc.set(newLoc.x(), newLoc.y(), newLoc.z());
+        return newLoc;
     }
 
     @Override
