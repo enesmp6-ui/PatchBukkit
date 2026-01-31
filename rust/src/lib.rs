@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pumpkin::{plugin::Context, server::Server};
+use pumpkin::plugin::Context;
 use pumpkin_api_macros::{plugin_impl, plugin_method};
 
 pub mod config;
@@ -15,7 +15,7 @@ use java::{
     resources::{cleanup_stale_files, sync_embedded_resources},
 };
 use tokio::sync::{
-    mpsc::{self, Receiver, Sender},
+    mpsc::{self, Receiver},
     oneshot,
 };
 
@@ -200,17 +200,16 @@ pub struct PatchBukkitPlugin {
 impl PatchBukkitPlugin {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::channel(100);
-        let command_tx = tx.clone();
 
         #[tokio::main]
-        pub async fn jvm_thread_task(command_tx: Sender<JvmCommand>, rx: Receiver<JvmCommand>) {
-            JvmWorker::new(command_tx, rx).attach_thread().await;
+        pub async fn jvm_thread_task(rx: Receiver<JvmCommand>) {
+            JvmWorker::new(rx).attach_thread().await;
         }
 
         std::thread::Builder::new()
             .name("patchbukkit-jvm-worker".to_string())
             .spawn(move || {
-                jvm_thread_task(command_tx.clone(), rx);
+                jvm_thread_task(rx);
             })
             .unwrap();
         PatchBukkitPlugin { command_tx: tx }

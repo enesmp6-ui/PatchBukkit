@@ -16,7 +16,6 @@ use crate::{
 
 pub struct JvmWorker {
     command_rx: mpsc::Receiver<JvmCommand>,
-    command_tx: mpsc::Sender<JvmCommand>,
     pub plugin_manager: PluginManager,
     pub event_manager: EventManager,
     jvm: Option<j4rs::Jvm>,
@@ -24,13 +23,9 @@ pub struct JvmWorker {
 }
 
 impl JvmWorker {
-    pub fn new(
-        command_tx: mpsc::Sender<JvmCommand>,
-        command_rx: mpsc::Receiver<JvmCommand>,
-    ) -> Self {
+    pub fn new(command_rx: mpsc::Receiver<JvmCommand>) -> Self {
         Self {
             command_rx,
-            command_tx,
             plugin_manager: PluginManager::new(),
             event_manager: EventManager::new(),
             jvm: None,

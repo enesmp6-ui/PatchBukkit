@@ -23,18 +23,18 @@ impl CommandExecutor for JavaCommandExecutor {
     fn execute<'a>(
         &'a self,
         sender: &'a pumpkin::command::CommandSender,
-        server: &'a pumpkin::server::Server,
-        args: &'a pumpkin::command::args::ConsumedArgs<'a>,
+        _server: &'a pumpkin::server::Server,
+        _args: &'a pumpkin::command::args::ConsumedArgs<'a>,
     ) -> pumpkin::command::CommandResult<'a> {
         Box::pin(async move {
-            let (tx, rx) = oneshot::channel();
+            let (tx, _rx) = oneshot::channel();
             let sender = match sender {
-                pumpkin::command::CommandSender::Rcon(mutex) => todo!(),
+                pumpkin::command::CommandSender::Rcon(_mutex) => todo!(),
                 pumpkin::command::CommandSender::Console => SimpleCommandSender::Console,
                 pumpkin::command::CommandSender::Player(player) => {
                     SimpleCommandSender::Player(player.gameprofile.id.to_string())
                 }
-                pumpkin::command::CommandSender::CommandBlock(block_entity, world) => todo!(),
+                pumpkin::command::CommandSender::CommandBlock(_block_entity, _world) => todo!(),
             };
             self.command_tx
                 .send(JvmCommand::TriggerCommand {

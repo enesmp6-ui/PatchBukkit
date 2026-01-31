@@ -223,9 +223,9 @@ impl PluginManager {
         &self,
         jvm: &Jvm,
         cmd_name: &str,
-        command: Arc<Mutex<Instance>>,
+        _command: Arc<Mutex<Instance>>,
         sender: SimpleCommandSender,
-        args: Vec<String>,
+        _args: Vec<String>,
     ) -> Result<(), String> {
         let j_sender = match sender {
             SimpleCommandSender::Console => jvm
