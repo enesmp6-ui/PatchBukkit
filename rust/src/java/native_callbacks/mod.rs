@@ -10,6 +10,7 @@ pub mod location;
 pub mod memory;
 pub mod message;
 pub mod registry;
+pub mod sound;
 pub mod utils;
 pub mod world;
 
@@ -44,6 +45,7 @@ pub fn initialize_callbacks(jvm: &Jvm) -> Result<()> {
     let free_string_addr = memory::rust_free_string as *const () as i64;
     let get_world_addr = world::rust_get_world as *const () as i64;
     let rust_get_registry_data_addr = registry::rust_get_registry_data as *const () as i64;
+    let rust_entity_play_sound_addr = sound::rust_entity_play_sound as *const () as i64;
 
     jvm.invoke_static(
         "org.patchbukkit.bridge.NativePatchBukkit",
@@ -57,6 +59,7 @@ pub fn initialize_callbacks(jvm: &Jvm) -> Result<()> {
             InvocationArg::try_from(free_string_addr)?.into_primitive()?,
             InvocationArg::try_from(get_world_addr)?.into_primitive()?,
             InvocationArg::try_from(rust_get_registry_data_addr)?.into_primitive()?,
+            InvocationArg::try_from(rust_entity_play_sound_addr)?.into_primitive()?,
         ],
     )?;
 

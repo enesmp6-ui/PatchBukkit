@@ -17,7 +17,6 @@ impl Registry {
     }
 }
 
-#[unsafe(no_mangle)]
 pub extern "C" fn rust_get_registry_data(registry_name: *const c_char) -> *const c_char {
     let name = get_string(registry_name);
 

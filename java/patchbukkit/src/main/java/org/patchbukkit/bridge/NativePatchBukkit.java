@@ -19,6 +19,7 @@ public class NativePatchBukkit {
     private static MethodHandle getWorldNative;
     private static MethodHandle freeStringNative;
     private static MethodHandle getRegistryDataNative;
+    private static MethodHandle entityPlaySoundNative;
 
     // Struct layout matching Rust's #[repr(C)] AbilitiesFFI
     private static final StructLayout ABILITIES_LAYOUT =
@@ -186,7 +187,8 @@ public class NativePatchBukkit {
         long getLocationAddr,
         long freeStringAddr,
         long getWorldAddr,
-        long getRegistryDataAddr
+        long getRegistryDataAddr,
+        long entityPlaySoundAddr
     ) {
         // void rust_send_message(const char* uuid, const char* message)
         sendMessageNative = LINKER.downcallHandle(
@@ -246,6 +248,20 @@ public class NativePatchBukkit {
         getRegistryDataNative = LINKER.downcallHandle(
             MemorySegment.ofAddress(getRegistryDataAddr),
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+        );
+
+        // void rust_entity_play_sound(const char* player_uuid, const char* sound_name,
+        //     const char* sound_category, const char* entity_uuid, float volume, float pitch)
+        entityPlaySoundNative = LINKER.downcallHandle(
+            MemorySegment.ofAddress(entityPlaySoundAddr),
+            FunctionDescriptor.ofVoid(
+                ValueLayout.ADDRESS,    // player_uuid
+                ValueLayout.ADDRESS,    // sound_name
+                ValueLayout.ADDRESS,    // sound_category
+                ValueLayout.ADDRESS,    // entity_uuid
+                ValueLayout.JAVA_FLOAT, // volume
+                ValueLayout.JAVA_FLOAT  // pitch
+            )
         );
     }
 
@@ -428,6 +444,43 @@ public class NativePatchBukkit {
             }
         } catch (Throwable t) {
             throw new RuntimeException("Failed to get registry data: " + registryName, t);
+        }
+    }
+
+    /**
+     * Play a sound effect attached to an entity, heard by a specific player.
+     *
+     * @param playerUuid    The player who will hear the sound
+     * @param soundName     Sound identifier (e.g. "block.note_block.chime")
+     * @param soundCategory Category name (e.g. "master", "music", "blocks")
+     * @param entityUuid    The entity the sound is attached to
+     * @param volume        Volume (1.0 = normal)
+     * @param pitch         Pitch (1.0 = normal)
+     */
+    public static void entityPlaySound(
+            UUID playerUuid,
+            String soundName,
+            String soundCategory,
+            UUID entityUuid,
+            float volume,
+            float pitch
+    ) {
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment playerUuidStr = arena.allocateFrom(playerUuid.toString());
+            MemorySegment soundNameStr = arena.allocateFrom(soundName);
+            MemorySegment soundCategoryStr = arena.allocateFrom(soundCategory);
+            MemorySegment entityUuidStr = arena.allocateFrom(entityUuid.toString());
+
+            entityPlaySoundNative.invokeExact(
+                playerUuidStr,
+                soundNameStr,
+                soundCategoryStr,
+                entityUuidStr,
+                volume,
+                pitch
+            );
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to call native entityPlaySound", t);
         }
     }
 }

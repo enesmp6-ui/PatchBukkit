@@ -4,7 +4,6 @@ use pumpkin_util::text::TextComponent;
 
 use crate::java::native_callbacks::{CALLBACK_CONTEXT, utils::get_string};
 
-#[unsafe(no_mangle)]
 pub extern "C" fn rust_send_message(uuid_ptr: *const c_char, message_ptr: *const c_char) {
     let uuid_str = get_string(uuid_ptr);
     let message = get_string(message_ptr);

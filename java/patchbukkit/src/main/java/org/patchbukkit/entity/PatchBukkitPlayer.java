@@ -711,8 +711,7 @@ public class PatchBukkitPlayer
 
     @Override
     public void playSound(Entity entity, Sound sound, SoundCategory category, float volume, float pitch) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'playSound'");
+        NativePatchBukkit.entityPlaySound(this.uuid, sound.toString(), category.name(), entity.getUniqueId(), volume, pitch);
     }
 
     @Override
