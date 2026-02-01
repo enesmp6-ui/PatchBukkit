@@ -1,5 +1,5 @@
 cd java
-./gradlew build
+./gradlew jar
 cd ..
 cd rust
 cargo build
