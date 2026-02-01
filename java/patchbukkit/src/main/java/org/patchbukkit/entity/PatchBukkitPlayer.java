@@ -62,6 +62,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
 import org.patchbukkit.PatchBukkitServer;
 import org.patchbukkit.bridge.NativePatchBukkit;
+import org.patchbukkit.registry.PatchBukkitSound;
 
 import com.destroystokyo.paper.ClientOption;
 import com.destroystokyo.paper.Title;
@@ -685,14 +686,13 @@ public class PatchBukkitPlayer
 
     @Override
     public void playSound(Location location, Sound sound, SoundCategory category, float volume, float pitch) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'playSound'");
+        var patchBukkitSound = (PatchBukkitSound) sound;
+        NativePatchBukkit.playerPlaySound(this.uuid, patchBukkitSound.getOriginalName(), category.name(), location.x(), location.y(), location.z(), volume, pitch);
     }
 
     @Override
     public void playSound(Location location, String sound, SoundCategory category, float volume, float pitch) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'playSound'");
+        NativePatchBukkit.playerPlaySound(this.uuid, sound, category.name(), location.x(), location.y(), location.z(), volume, pitch);
     }
 
     @Override
@@ -711,13 +711,13 @@ public class PatchBukkitPlayer
 
     @Override
     public void playSound(Entity entity, Sound sound, SoundCategory category, float volume, float pitch) {
-        NativePatchBukkit.entityPlaySound(this.uuid, sound.toString(), category.name(), entity.getUniqueId(), volume, pitch);
+        var patchBukkitSound = (PatchBukkitSound) sound;
+        NativePatchBukkit.playerEntityPlaySound(this.uuid, patchBukkitSound.getOriginalName(), category.name(), entity.getUniqueId(), volume, pitch);
     }
 
     @Override
     public void playSound(Entity entity, String sound, SoundCategory category, float volume, float pitch) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'playSound'");
+        NativePatchBukkit.playerEntityPlaySound(this.uuid, sound, category.name(), entity.getUniqueId(), volume, pitch);
     }
 
     @Override

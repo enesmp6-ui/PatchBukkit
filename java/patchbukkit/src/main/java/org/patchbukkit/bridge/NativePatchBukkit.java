@@ -19,7 +19,8 @@ public class NativePatchBukkit {
     private static MethodHandle getWorldNative;
     private static MethodHandle freeStringNative;
     private static MethodHandle getRegistryDataNative;
-    private static MethodHandle entityPlaySoundNative;
+    private static MethodHandle playerEntityPlaySoundNative;
+    private static MethodHandle playerPlaySoundNative;
 
     // Struct layout matching Rust's #[repr(C)] AbilitiesFFI
     private static final StructLayout ABILITIES_LAYOUT =
@@ -188,7 +189,8 @@ public class NativePatchBukkit {
         long freeStringAddr,
         long getWorldAddr,
         long getRegistryDataAddr,
-        long entityPlaySoundAddr
+        long playerEntityPlaySoundAddr,
+        long playerPlaySoundAddr
     ) {
         // void rust_send_message(const char* uuid, const char* message)
         sendMessageNative = LINKER.downcallHandle(
@@ -250,10 +252,10 @@ public class NativePatchBukkit {
             FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS)
         );
 
-        // void rust_entity_play_sound(const char* player_uuid, const char* sound_name,
+        // void rust_player_entity_play_sound(const char* player_uuid, const char* sound_name,
         //     const char* sound_category, const char* entity_uuid, float volume, float pitch)
-        entityPlaySoundNative = LINKER.downcallHandle(
-            MemorySegment.ofAddress(entityPlaySoundAddr),
+        playerEntityPlaySoundNative = LINKER.downcallHandle(
+            MemorySegment.ofAddress(playerEntityPlaySoundAddr),
             FunctionDescriptor.ofVoid(
                 ValueLayout.ADDRESS,    // player_uuid
                 ValueLayout.ADDRESS,    // sound_name
@@ -261,6 +263,22 @@ public class NativePatchBukkit {
                 ValueLayout.ADDRESS,    // entity_uuid
                 ValueLayout.JAVA_FLOAT, // volume
                 ValueLayout.JAVA_FLOAT  // pitch
+            )
+        );
+
+        // void rust_player_play_sound(const char* player_uuid, const char* sound_name,
+        //     const char* sound_category, double x, double y, double z, float volume, float pitch)
+        playerPlaySoundNative = LINKER.downcallHandle(
+            MemorySegment.ofAddress(playerPlaySoundAddr),
+            FunctionDescriptor.ofVoid(
+                ValueLayout.ADDRESS,     // player_uuid
+                ValueLayout.ADDRESS,     // sound_name
+                ValueLayout.ADDRESS,     // sound_category
+                ValueLayout.JAVA_DOUBLE, // x
+                ValueLayout.JAVA_DOUBLE, // y
+                ValueLayout.JAVA_DOUBLE, // z
+                ValueLayout.JAVA_FLOAT,  // volume
+                ValueLayout.JAVA_FLOAT   // pitch
             )
         );
     }
@@ -457,7 +475,7 @@ public class NativePatchBukkit {
      * @param volume        Volume (1.0 = normal)
      * @param pitch         Pitch (1.0 = normal)
      */
-    public static void entityPlaySound(
+    public static void playerEntityPlaySound(
             UUID playerUuid,
             String soundName,
             String soundCategory,
@@ -471,7 +489,7 @@ public class NativePatchBukkit {
             MemorySegment soundCategoryStr = arena.allocateFrom(soundCategory);
             MemorySegment entityUuidStr = arena.allocateFrom(entityUuid.toString());
 
-            entityPlaySoundNative.invokeExact(
+            playerEntityPlaySoundNative.invokeExact(
                 playerUuidStr,
                 soundNameStr,
                 soundCategoryStr,
@@ -481,6 +499,48 @@ public class NativePatchBukkit {
             );
         } catch (Throwable t) {
             throw new RuntimeException("Failed to call native entityPlaySound", t);
+        }
+    }
+
+    /**
+     * Play a sound effect at a location, heard by a specific player.
+     *
+     * @param playerUuid    The player who will hear the sound
+     * @param soundName     Sound identifier (e.g. "block.note_block.chime")
+     * @param soundCategory Category name (e.g. "master", "music", "blocks")
+     * @param x             X coordinate
+     * @param y             Y coordinate
+     * @param z             Z coordinate
+     * @param volume        Volume (1.0 = normal)
+     * @param pitch         Pitch (1.0 = normal)
+     */
+    public static void playerPlaySound(
+            UUID playerUuid,
+            String soundName,
+            String soundCategory,
+            double x,
+            double y,
+            double z,
+            float volume,
+            float pitch
+    ) {
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment playerUuidStr = arena.allocateFrom(playerUuid.toString());
+            MemorySegment soundNameStr = arena.allocateFrom(soundName);
+            MemorySegment soundCategoryStr = arena.allocateFrom(soundCategory);
+
+            playerPlaySoundNative.invokeExact(
+                playerUuidStr,
+                soundNameStr,
+                soundCategoryStr,
+                x,
+                y,
+                z,
+                volume,
+                pitch
+            );
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to call native playerPlaySound", t);
         }
     }
 }

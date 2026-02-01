@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use rust_embed::Embed;
 
 #[derive(Embed)]

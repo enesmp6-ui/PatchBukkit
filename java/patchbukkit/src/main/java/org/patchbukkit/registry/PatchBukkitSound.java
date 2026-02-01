@@ -9,13 +9,19 @@ public class PatchBukkitSound implements Sound {
     private final NamespacedKey namespacedKey;
     private final Key adventureKey;
     private final String enumName;
+    private final String originalName;
     private final int protocolId;
 
     public PatchBukkitSound(String soundName, int protocolId) {
         this.namespacedKey = new NamespacedKey(NamespacedKey.MINECRAFT, soundName);
         this.adventureKey = Key.key(Key.MINECRAFT_NAMESPACE, soundName);
         this.protocolId = protocolId;
+        this.originalName = soundName;
         this.enumName = soundName.toUpperCase().replace('.', '_');
+    }
+
+    public String getOriginalName() {
+        return originalName;
     }
 
     @Override
