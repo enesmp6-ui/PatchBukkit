@@ -59,11 +59,9 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
-import org.patchbukkit.PatchBukkitServer;
 import org.patchbukkit.bridge.NativePatchBukkit;
 import org.patchbukkit.registry.PatchBukkitSound;
 
@@ -420,8 +418,7 @@ public class PatchBukkitPlayer
 
     @Override
     public String getDisplayName() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDisplayName'");
+        return this.getName();
     }
 
     @Override

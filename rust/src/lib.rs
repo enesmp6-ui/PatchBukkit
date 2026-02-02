@@ -19,19 +19,14 @@ use tokio::sync::{
     oneshot,
 };
 
-use crate::{
-    events::register_handlers,
-    java::jvm::{
-        commands::{JvmCommand, LoadPluginResult},
-        worker::JvmWorker,
-    },
+use crate::java::jvm::{
+    commands::{JvmCommand, LoadPluginResult},
+    worker::JvmWorker,
 };
 
 async fn on_load_inner(plugin: &mut PatchBukkitPlugin, server: Arc<Context>) -> Result<(), String> {
     server.init_log();
     log::info!("Starting PatchBukkit");
-
-    register_handlers(plugin.command_tx.clone(), &server).await;
 
     // Setup directories
     let dirs = setup_directories(&server)?;
@@ -112,6 +107,7 @@ async fn on_load_inner(plugin: &mut PatchBukkitPlugin, server: Arc<Context>) -> 
                 j4rs_path: dirs.j4rs,
                 respond_to: tx,
                 context: server.clone(),
+                command_tx: plugin.command_tx.clone(),
             })
             .await
             .map_err(|e| format!("Failed to send command to initialize J4RS: {}", e))?;

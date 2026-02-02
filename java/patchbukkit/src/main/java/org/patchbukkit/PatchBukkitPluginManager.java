@@ -19,6 +19,7 @@ import org.bukkit.plugin.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
+import org.patchbukkit.events.PatchBukkitEventManager;
 import org.patchbukkit.permissions.PatchBukkitPermissionManager;
 
 @SuppressWarnings("removal")
@@ -32,6 +33,10 @@ public class PatchBukkitPluginManager implements PluginManager {
         this.server = server;
         this.eventManager = new PatchBukkitEventManager(server);
         this.permissionManager = new PatchBukkitPermissionManager();
+    }
+
+    public PatchBukkitEventManager getEventManager() {
+        return eventManager;
     }
 
     @Override
