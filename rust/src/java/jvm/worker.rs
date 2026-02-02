@@ -10,14 +10,17 @@ use crate::{
         jar::read_configs_from_jar,
         jvm::commands::{JvmCommand, LoadPluginResult},
         native_callbacks::{init_callback_context, initialize_callbacks},
+        plugin::{
+            command_manager::CommandManager, event_manager::EventManager, manager::PluginManager,
+        },
     },
-    plugin::{event_manager::EventManager, manager::PluginManager},
 };
 
 pub struct JvmWorker {
     command_rx: mpsc::Receiver<JvmCommand>,
     pub plugin_manager: PluginManager,
     pub event_manager: EventManager,
+    pub command_manager: CommandManager,
     jvm: Option<j4rs::Jvm>,
     context: Option<Arc<Context>>,
 }
@@ -28,6 +31,7 @@ impl JvmWorker {
             command_rx,
             plugin_manager: PluginManager::new(),
             event_manager: EventManager::new(),
+            command_manager: CommandManager::new(),
             jvm: None,
             context: None,
         }
@@ -99,7 +103,12 @@ impl JvmWorker {
 
                     let _ = respond_to.send(
                         self.plugin_manager
-                            .instantiate_all_plugins(jvm, &server, command_tx)
+                            .instantiate_all_plugins(
+                                jvm,
+                                &server,
+                                command_tx,
+                                &mut self.command_manager,
+                            )
                             .await,
                     );
                 }
@@ -123,7 +132,10 @@ impl JvmWorker {
                     let _ = respond_to.send(self.plugin_manager.unload_all_plugins());
                     break;
                 }
-                JvmCommand::TriggerEvent { event, respond_to } => {
+                JvmCommand::TriggerEvent {
+                    event,
+                    respond_to: _,
+                } => {
                     let jvm = match self.jvm {
                         Some(ref jvm) => jvm,
                         None => &Jvm::attach_thread().unwrap(),
@@ -221,21 +233,40 @@ impl JvmWorker {
                     cmd_name,
                     command_sender,
                     respond_to,
-                    command,
+                    args,
                 } => {
                     let jvm = match self.jvm {
                         Some(ref jvm) => jvm,
                         None => &Jvm::attach_thread().unwrap(),
                     };
-                    self.plugin_manager
-                        .trigger_command(
-                            jvm,
-                            &cmd_name,
-                            command,
-                            command_sender,
-                            vec![cmd_name.clone()],
-                        )
-                        .unwrap();
+
+                    let result =
+                        self.command_manager
+                            .trigger_command(jvm, &cmd_name, command_sender, args);
+
+                    let _ = respond_to.send(result);
+                }
+                JvmCommand::GetCommandTabComplete {
+                    command_sender,
+                    cmd_name,
+                    respond_to,
+                    args,
+                    location,
+                } => {
+                    let jvm = match self.jvm {
+                        Some(ref jvm) => jvm,
+                        None => &Jvm::attach_thread().unwrap(),
+                    };
+
+                    let result = self.command_manager.get_tab_complete(
+                        jvm,
+                        command_sender,
+                        &cmd_name,
+                        args,
+                        location,
+                    );
+
+                    let _ = respond_to.send(result);
                 }
             }
         }

@@ -3,11 +3,11 @@ use std::sync::Arc;
 use pumpkin::plugin::Context;
 use pumpkin_api_macros::{plugin_impl, plugin_method};
 
+pub mod commands;
 pub mod config;
 pub mod directories;
 pub mod events;
 pub mod java;
-pub mod plugin;
 
 use directories::setup_directories;
 use java::{

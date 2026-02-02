@@ -1,16 +1,12 @@
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use anyhow::Result;
 use j4rs::{Instance, InvocationArg, Jvm};
-use pumpkin::{
-    command::tree::{CommandTree, builder::literal},
-    plugin::Context,
-};
-use pumpkin_util::permission::{Permission, PermissionDefault};
+use pumpkin::plugin::Context;
 use tokio::sync::mpsc;
 
 use crate::{
@@ -18,10 +14,7 @@ use crate::{
         paper::PaperPluginYml,
         spigot::{Command, SpigotPluginYml},
     },
-    java::jvm::{
-        command_executor::{JavaCommandExecutor, SimpleCommandSender},
-        commands::JvmCommand,
-    },
+    java::{jvm::commands::JvmCommand, plugin::command_manager::CommandManager},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -219,84 +212,13 @@ impl PluginManager {
         Ok(())
     }
 
-    pub fn trigger_command(
-        &self,
-        jvm: &Jvm,
-        cmd_name: &str,
-        _command: Arc<Mutex<Instance>>,
-        sender: SimpleCommandSender,
-        _args: Vec<String>,
-    ) -> Result<(), String> {
-        let j_sender = match sender {
-            SimpleCommandSender::Console => jvm
-                .invoke_static(
-                    "org.bukkit.Bukkit",
-                    "getConsoleSender",
-                    InvocationArg::empty(),
-                )
-                .map_err(|e| e.to_string())?,
-
-            SimpleCommandSender::Player(uuid_str) => {
-                // Get the server and cast it to your implementation
-                let server = jvm
-                    .invoke_static("org.bukkit.Bukkit", "getServer", InvocationArg::empty())
-                    .map_err(|e| e.to_string())?;
-                let patch_server = jvm
-                    .cast(&server, "org.patchbukkit.PatchBukkitServer")
-                    .map_err(|e| e.to_string())?;
-
-                // Create Java UUID object
-                let j_uuid = jvm
-                    .invoke_static(
-                        "java.util.UUID",
-                        "fromString",
-                        &[InvocationArg::try_from(uuid_str).map_err(|e| e.to_string())?],
-                    )
-                    .map_err(|e| e.to_string())?;
-
-                // Call your getPlayer(UUID) method on the server
-                jvm.invoke(&patch_server, "getPlayer", &[InvocationArg::from(j_uuid)])
-                    .map_err(|e| e.to_string())?
-            }
-        };
-
-        let server_instance = jvm
-            .invoke_static("org.bukkit.Bukkit", "getServer", InvocationArg::empty())
-            .unwrap();
-
-        let command_map = jvm
-            .invoke(&server_instance, "getCommandMap", InvocationArg::empty())
-            .unwrap();
-
-        let dispatch_result = jvm
-            .invoke(
-                &command_map,
-                "dispatch",
-                &[
-                    InvocationArg::from(j_sender),
-                    InvocationArg::try_from(cmd_name).unwrap(),
-                ],
-            )
-            .unwrap();
-
-        let handled: bool = jvm.to_rust(dispatch_result).unwrap();
-
-        if !handled {
-            //log::warn!("Command was not handled by any Java plugin: {}", cmd_name);
-        }
-
-        Ok(())
-    }
-
     pub async fn instantiate_all_plugins(
         &mut self,
         jvm: &Jvm,
         server: &Arc<Context>,
         command_tx: mpsc::Sender<JvmCommand>,
+        command_manager: &mut CommandManager,
     ) -> Result<()> {
-        let server_instance =
-            jvm.invoke_static("org.bukkit.Bukkit", "getServer", InvocationArg::empty())?;
-
         for (_plugin_name, plugin) in &mut self.plugins {
             let plugin_instance = jvm.invoke_static(
                 "org.patchbukkit.loader.PatchBukkitPluginLoader",
@@ -308,88 +230,29 @@ impl PluginManager {
             )?;
 
             plugin.instance = Some(plugin_instance);
-            let instance_ref = plugin.instance.as_ref().unwrap();
-
-            let command_map =
-                jvm.invoke(&server_instance, "getCommandMap", InvocationArg::empty())?;
 
             for (cmd_name, cmd_data) in &plugin.commands {
-                let cloned_plugin_instance = jvm.clone_instance(instance_ref)?;
-                let j_plugin_arg = InvocationArg::from(cloned_plugin_instance);
-
-                let j_plugin_cmd = Arc::new(Mutex::new(jvm.invoke_static(
-                    "org.patchbukkit.command.CommandFactory",
-                    "create",
-                    &[InvocationArg::try_from(cmd_name)?, j_plugin_arg],
-                )?));
-                log::info!("Registering Bukkit command: {}", cmd_name);
-                {
-                    let cmd_lock = j_plugin_cmd.lock().unwrap();
-                    let j_plugin_cmd_owned = jvm.clone_instance(&*cmd_lock)?;
-                    jvm.invoke(
-                        &command_map,
-                        "register",
-                        &[
-                            InvocationArg::try_from(cmd_name)?,
-                            InvocationArg::try_from(&plugin.name)?,
-                            InvocationArg::from(j_plugin_cmd_owned),
-                        ],
-                    )?;
-                }
-                let j_sender = jvm
-                    .invoke_static(
-                        "org.bukkit.Bukkit",
-                        "getConsoleSender",
-                        InvocationArg::empty(),
+                match command_manager
+                    .register_command(
+                        &jvm,
+                        server,
+                        &plugin,
+                        cmd_name.clone(),
+                        cmd_data,
+                        command_tx.clone(),
                     )
-                    .map_err(|e| e.to_string())
-                    .unwrap();
-
-                // Make the tab working, at least the first thingy
-                let dispatch_result = jvm
-                    .invoke(
-                        &command_map,
-                        "tabComplete",
-                        &[
-                            InvocationArg::from(j_sender),
-                            InvocationArg::try_from(format!("{} ", cmd_name)).unwrap(),
-                        ],
-                    )
-                    .unwrap();
-
-                let tab_list: Vec<String> = jvm.to_rust(dispatch_result).unwrap();
-
-                let mut node =
-                    CommandTree::new([cmd_name], cmd_data.description.clone().unwrap_or_default())
-                        .execute(JavaCommandExecutor {
-                            cmd_name: cmd_name.clone(),
-                            command_tx: command_tx.clone(),
-                            command: j_plugin_cmd.clone(),
-                        });
-                for tab in tab_list {
-                    node = node.then(literal(tab).execute(JavaCommandExecutor {
-                        cmd_name: cmd_name.clone(),
-                        command_tx: command_tx.clone(),
-                        command: j_plugin_cmd.clone(),
-                    }));
-                }
-                // TODO
-                // let permission = if let Some(perm) = cmd_data.permission.clone() {
-                //     perm
-                // } else {
-                //     format!("patchbukkit:{}", cmd_name) // TODO
-                // };
-                let permission = format!("patchbukkit:{}", cmd_name);
-
-                server
-                    .register_permission(Permission::new(
-                        &permission,
-                        &permission,
-                        PermissionDefault::Allow,
-                    ))
                     .await
-                    .unwrap();
-                server.register_command(node, permission).await
+                {
+                    Ok(_) => (),
+                    Err(e) => {
+                        log::error!(
+                            "Failed to register command {} for plugin {}: {:?}",
+                            cmd_name,
+                            plugin.name,
+                            e
+                        );
+                    }
+                }
             }
 
             plugin.state = PluginState::Loaded;

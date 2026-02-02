@@ -4,7 +4,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.Server;
-import org.bukkit.command.CommandSender;
+import org.bukkit.block.Block;
+import org.bukkit.command.BlockCommandSender;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
@@ -14,7 +15,12 @@ import org.jetbrains.annotations.Nullable;
 
 import net.kyori.adventure.text.Component;
 
-public class PatchBukkitCommandSender implements CommandSender {
+public class PatchBukkitBlockCommandSender implements BlockCommandSender {
+    @NotNull
+    public Block getBlock() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getBlock'");
+    }
 
     @Override
     public boolean isPermissionSet(@NotNull String name) {
@@ -141,5 +147,5 @@ public class PatchBukkitCommandSender implements CommandSender {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'name'");
     }
-    
+
 }
