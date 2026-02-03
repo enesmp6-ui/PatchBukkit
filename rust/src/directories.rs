@@ -11,9 +11,7 @@ pub struct PatchBukkitDirectories {
 }
 
 pub fn setup_directories(server: &Context) -> Result<PatchBukkitDirectories, String> {
-    let base = server
-        .get_data_folder()
-        .canonicalize()
+    let base = std::path::absolute(server.get_data_folder())
         .map_err(|_| "Failed to get absolute directory from relative")?;
 
     let plugins = base.join("patchbukkit-plugins");
@@ -21,11 +19,11 @@ pub fn setup_directories(server: &Context) -> Result<PatchBukkitDirectories, Str
     let j4rs = base.join("j4rs");
     let jassets = j4rs.join("jassets");
 
-    // fs::create_dir_all(&plugin_updates)
-    //     .map_err(|err| format!("Failed to create plugin folder: {:?}", err))?;
-
     fs::create_dir_all(&jassets)
         .map_err(|err| format!("Failed to create jassets folder: {:?}", err))?;
+
+    fs::create_dir_all(&plugins)
+        .map_err(|err| format!("Failed to create patchbukkit-plugins folder: {:?}", err))?;
 
     Ok(PatchBukkitDirectories {
         base,

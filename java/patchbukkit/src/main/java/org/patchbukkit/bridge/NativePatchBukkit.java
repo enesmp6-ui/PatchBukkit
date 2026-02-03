@@ -4,8 +4,11 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.UUID;
+
+import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import org.patchbukkit.events.PatchBukkitEventSerializer;
 
 public class NativePatchBukkit {
 
@@ -13,6 +16,7 @@ public class NativePatchBukkit {
 
     private static MethodHandle sendMessageNative;
     private static MethodHandle registerEventNative;
+    private static MethodHandle callEventNative;
     private static MethodHandle getAbilitiesNative;
     private static MethodHandle setAbilitiesNative;
     private static MethodHandle getLocationNative;
@@ -183,6 +187,7 @@ public class NativePatchBukkit {
     public static void initCallbacks(
         long sendMessageAddr,
         long registerEventAddr,
+        long callEventAddr,
         long getAbilitiesAddr,
         long setAbilitiesAddr,
         long getLocationAddr,
@@ -198,10 +203,26 @@ public class NativePatchBukkit {
             FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS)
         );
 
-        // void rust_register_event(void* listener, void* plugin)
+        // void rust_register_event(const char* event_type, const char* plugin_name, int32_t priority, bool blocking)
         registerEventNative = LINKER.downcallHandle(
             MemorySegment.ofAddress(registerEventAddr),
-            FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            FunctionDescriptor.ofVoid(
+                ValueLayout.ADDRESS,      // event_type string
+                ValueLayout.ADDRESS,      // plugin_name string
+                ValueLayout.JAVA_INT,     // priority ordinal
+                ValueLayout.JAVA_BOOLEAN  // blocking
+            )
+        );
+
+        // bool rust_call_event(const char* event_type, const char* event_data_json)
+        // Returns true if Pumpkin handled it, false if unknown event type
+        callEventNative = LINKER.downcallHandle(
+            MemorySegment.ofAddress(callEventAddr),
+            FunctionDescriptor.of(
+                ValueLayout.JAVA_BOOLEAN, // return: was handled by Pumpkin
+                ValueLayout.ADDRESS,      // event_type string
+                ValueLayout.ADDRESS       // event_data_json string
+            )
         );
 
         // bool rust_get_abilities(const char* uuid, AbilitiesFFI* out)
@@ -297,22 +318,24 @@ public class NativePatchBukkit {
     }
 
     /**
-     * Register an event listener for a plugin.
-     */
-    public static void registerEvent(Listener listener, Plugin plugin) {
-        // For objects, you have options:
-        // 1. Pass identifying info (strings, IDs) instead of object refs
-        // 2. Store objects in a Java-side registry and pass an ID
-        // 3. Use JNI NewGlobalRef from Rust side if you need to hold refs
-        // Simple approach - pass plugin name, handle lookup in Rust
+    * Register an event listener with Pumpkin's event system.
+    *
+    * Called by PatchBukkitEventManager when a plugin registers for an event.
+    * Rust will create a PatchBukkitEventHandler that listens for the corresponding
+    * Pumpkin event and dispatches back to Java when it fires.
+    *
+    * @param eventType   Fully qualified Bukkit event class name (e.g. "org.bukkit.event.player.PlayerJoinEvent")
+    * @param pluginName  Name of the plugin registering this listener
+    * @param priority    Bukkit EventPriority ordinal (0=LOWEST through 5=MONITOR), clamped to 0-4 for Pumpkin
+    * @param blocking    Whether the handler should block
+    */
+    public static void registerEvent(String eventType, String pluginName, int priority, boolean blocking) {
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment pluginName = arena.allocateFrom(plugin.getName());
-            MemorySegment listenerClass = arena.allocateFrom(
-                listener.getClass().getName()
-            );
-            registerEventNative.invokeExact(listenerClass, pluginName);
+            MemorySegment eventTypeStr = arena.allocateFrom(eventType);
+            MemorySegment pluginNameStr = arena.allocateFrom(pluginName);
+            registerEventNative.invokeExact(eventTypeStr, pluginNameStr, priority, blocking);
         } catch (Throwable t) {
-            throw new RuntimeException("Failed to register event", t);
+            throw new RuntimeException("Failed to register event: " + eventType + " for plugin " + pluginName, t);
         }
     }
 
@@ -541,6 +564,26 @@ public class NativePatchBukkit {
             );
         } catch (Throwable t) {
             throw new RuntimeException("Failed to call native playerPlaySound", t);
+        }
+    }
+
+    public static boolean callEvent(Event event) {
+        try (Arena arena = Arena.ofConfined()) {
+            // Serialize event data to JSON for Rust
+            String eventDataJson = PatchBukkitEventSerializer.serialize(event);
+
+            MemorySegment eventTypeStr = arena.allocateFrom(event.getEventName());
+            MemorySegment eventDataStr = arena.allocateFrom(eventDataJson);
+
+            boolean handled = (boolean) callEventNative.invokeExact(eventTypeStr, eventDataStr);
+
+            // If Pumpkin handled it and event is Cancellable, we need to read back
+            // the cancelled state. This is handled by Rust calling back to update
+            // the event object directly.
+
+            return handled;
+        } catch (Throwable t) {
+            throw new RuntimeException("Failed to call event: " + event.getEventName(), t);
         }
     }
 }

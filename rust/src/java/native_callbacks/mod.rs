@@ -3,6 +3,9 @@ use std::sync::{Arc, OnceLock};
 use anyhow::Result;
 use j4rs::{InvocationArg, Jvm};
 use pumpkin::plugin::Context;
+use tokio::sync::mpsc;
+
+use crate::java::jvm::commands::JvmCommand;
 
 pub mod abilities;
 pub mod events;
@@ -19,15 +22,18 @@ static CALLBACK_CONTEXT: OnceLock<CallbackContext> = OnceLock::new();
 struct CallbackContext {
     pub plugin_context: Arc<Context>,
     pub runtime: tokio::runtime::Handle,
+    pub command_tx: mpsc::Sender<JvmCommand>,
 }
 
 pub fn init_callback_context(
     plugin_context: Arc<Context>,
     runtime: tokio::runtime::Handle,
+    command_tx: mpsc::Sender<JvmCommand>,
 ) -> Result<()> {
     let context = CallbackContext {
         plugin_context,
         runtime,
+        command_tx,
     };
 
     CALLBACK_CONTEXT
@@ -39,6 +45,7 @@ pub fn init_callback_context(
 pub fn initialize_callbacks(jvm: &Jvm) -> Result<()> {
     let send_message_addr = message::rust_send_message as *const () as i64;
     let register_event_addr = events::rust_register_event as *const () as i64;
+    let call_event_addr = events::rust_call_event as *const () as i64;
     let get_abilities_addr = abilities::rust_get_abilities as *const () as i64;
     let set_abilities_addr = abilities::rust_set_abilities as *const () as i64;
     let get_location_addr = location::rust_get_location as *const () as i64;
@@ -55,6 +62,7 @@ pub fn initialize_callbacks(jvm: &Jvm) -> Result<()> {
         &[
             InvocationArg::try_from(send_message_addr)?.into_primitive()?,
             InvocationArg::try_from(register_event_addr)?.into_primitive()?,
+            InvocationArg::try_from(call_event_addr)?.into_primitive()?,
             InvocationArg::try_from(get_abilities_addr)?.into_primitive()?,
             InvocationArg::try_from(set_abilities_addr)?.into_primitive()?,
             InvocationArg::try_from(get_location_addr)?.into_primitive()?,

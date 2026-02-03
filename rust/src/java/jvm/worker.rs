@@ -4,20 +4,20 @@ use j4rs::{InvocationArg, Jvm, JvmBuilder};
 use pumpkin::plugin::Context;
 use tokio::sync::mpsc;
 
-use crate::{
-    events::Event,
-    java::{
-        jar::read_configs_from_jar,
-        jvm::commands::{JvmCommand, LoadPluginResult},
-        native_callbacks::{init_callback_context, initialize_callbacks},
+use crate::java::{
+    jar::read_configs_from_jar,
+    jvm::commands::{JvmCommand, LoadPluginResult},
+    native_callbacks::{init_callback_context, initialize_callbacks},
+    plugin::{
+        command_manager::CommandManager, event_manager::EventManager, manager::PluginManager,
     },
-    plugin::{event_manager::EventManager, manager::PluginManager},
 };
 
 pub struct JvmWorker {
     command_rx: mpsc::Receiver<JvmCommand>,
     pub plugin_manager: PluginManager,
     pub event_manager: EventManager,
+    pub command_manager: CommandManager,
     jvm: Option<j4rs::Jvm>,
     context: Option<Arc<Context>>,
 }
@@ -28,6 +28,7 @@ impl JvmWorker {
             command_rx,
             plugin_manager: PluginManager::new(),
             event_manager: EventManager::new(),
+            command_manager: CommandManager::new(),
             jvm: None,
             context: None,
         }
@@ -42,9 +43,14 @@ impl JvmWorker {
                     j4rs_path,
                     respond_to,
                     context,
+                    command_tx,
                 } => {
-                    init_callback_context(context.clone(), tokio::runtime::Handle::current())
-                        .unwrap();
+                    init_callback_context(
+                        context.clone(),
+                        tokio::runtime::Handle::current(),
+                        command_tx.clone(),
+                    )
+                    .unwrap();
                     self.context = Some(context);
                     let result = self.initialize_jvm(&j4rs_path);
                     let _ = respond_to.send(result);
@@ -99,7 +105,12 @@ impl JvmWorker {
 
                     let _ = respond_to.send(
                         self.plugin_manager
-                            .instantiate_all_plugins(jvm, &server, command_tx)
+                            .instantiate_all_plugins(
+                                jvm,
+                                &server,
+                                command_tx,
+                                &mut self.command_manager,
+                            )
                             .await,
                     );
                 }
@@ -123,119 +134,65 @@ impl JvmWorker {
                     let _ = respond_to.send(self.plugin_manager.unload_all_plugins());
                     break;
                 }
-                JvmCommand::TriggerEvent { event, respond_to } => {
-                    let jvm = match self.jvm {
-                        Some(ref jvm) => jvm,
-                        None => &Jvm::attach_thread().unwrap(),
-                    };
-
-                    match event {
-                        Event::PlayerJoinEvent(player_join_event) => {
-                            let server_instance = jvm
-                                .invoke_static(
-                                    "org.bukkit.Bukkit",
-                                    "getServer",
-                                    InvocationArg::empty(),
-                                )
-                                .map_err(|e| format!("Failed to get server: {}", e))
-                                .unwrap();
-
-                            // let cloned_server_instance =
-                            //     jvm.clone_instance(&server_instance).unwrap();
-
-                            // let j_entity = jvm
-                            //     .create_instance(
-                            //         "org.patchbukkit.entity.PatchBukkitEntity",
-                            //         &[
-                            //             InvocationArg::from(cloned_server_instance),
-                            //             // InvocationArg::from(InvocationArg::empty()), // Placeholder for the actual NMS entity
-                            //         ],
-                            //     )
-                            //     .unwrap();
-                            // let cloned_server_instance =
-                            //     jvm.clone_instance(&server_instance).unwrap();
-
-                            let player = player_join_event.player;
-
-                            let j_uuid = jvm
-                                .invoke_static(
-                                    "java.util.UUID",
-                                    "fromString",
-                                    &[InvocationArg::try_from(player.gameprofile.id.to_string())
-                                        .unwrap()],
-                                )
-                                .map_err(|e| format!("Failed to create Java UUID: {}", e))
-                                .unwrap();
-
-                            let j_player = jvm
-                                .create_instance(
-                                    "org.patchbukkit.entity.PatchBukkitPlayer",
-                                    &[
-                                        InvocationArg::from(j_uuid),
-                                        InvocationArg::try_from(player.gameprofile.name.clone())
-                                            .unwrap(),
-                                    ],
-                                )
-                                .map_err(|e| format!("Failed to create player instance: {}", e))
-                                .unwrap();
-
-                            let player_permission_level = player.permission_lvl.load();
-                            if player_permission_level
-                                >= self
-                                    .context
-                                    .as_ref()
-                                    .unwrap()
-                                    .server
-                                    .basic_config
-                                    .op_permission_level
-                            {
-                                jvm.invoke(
-                                    &j_player,
-                                    "setOp",
-                                    &[InvocationArg::try_from(true)
-                                        .unwrap()
-                                        .into_primitive()
-                                        .unwrap()],
-                                )
-                                .map_err(|e| {
-                                    format!("Failed to give operator status to new player: {}", e)
-                                })
-                                .unwrap();
-                            };
-
-                            let patch_server = jvm
-                                .cast(&server_instance, "org.patchbukkit.PatchBukkitServer")
-                                .unwrap();
-
-                            jvm.invoke(
-                                &patch_server,
-                                "registerPlayer",
-                                &[InvocationArg::from(j_player)],
-                            )
-                            .unwrap();
-                            // self.event_manager.call_event(&jvm, event)
-                        }
-                    }
-                }
-                JvmCommand::TriggerCommand {
-                    cmd_name,
-                    command_sender,
+                JvmCommand::FireEvent {
                     respond_to,
-                    command,
+                    plugin,
+                    patchbukkit_event,
                 } => {
                     let jvm = match self.jvm {
                         Some(ref jvm) => jvm,
                         None => &Jvm::attach_thread().unwrap(),
                     };
-                    self.plugin_manager
-                        .trigger_command(
-                            jvm,
-                            &cmd_name,
-                            command,
-                            command_sender,
-                            vec![cmd_name.clone()],
-                        )
-                        .unwrap();
+
+                    let cancelled =
+                        match self
+                            .event_manager
+                            .fire_event(jvm, patchbukkit_event, plugin)
+                        {
+                            Ok(c) => c,
+                            Err(e) => {
+                                log::error!("Failed to fire event: {}", e);
+                                false
+                            }
+                        };
+
+                    let _ = respond_to.send(cancelled);
+                }
+                JvmCommand::TriggerCommand {
+                    full_command,
+                    command_sender,
+                    respond_to,
+                } => {
+                    let jvm = match self.jvm {
+                        Some(ref jvm) => jvm,
+                        None => &Jvm::attach_thread().unwrap(),
+                    };
+
+                    let result =
+                        self.command_manager
+                            .trigger_command(jvm, full_command, command_sender);
+
+                    let _ = respond_to.send(result);
+                }
+                JvmCommand::GetCommandTabComplete {
+                    command_sender,
+                    full_command,
+                    respond_to,
+                    location,
+                } => {
+                    let jvm = match self.jvm {
+                        Some(ref jvm) => jvm,
+                        None => &Jvm::attach_thread().unwrap(),
+                    };
+
+                    let result = self.command_manager.get_tab_complete(
+                        jvm,
+                        command_sender,
+                        full_command,
+                        location,
+                    );
+
+                    let _ = respond_to.send(result);
                 }
             }
         }

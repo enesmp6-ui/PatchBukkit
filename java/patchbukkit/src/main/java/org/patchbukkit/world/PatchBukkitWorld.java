@@ -44,6 +44,9 @@ public class PatchBukkitWorld
         return instances.computeIfAbsent(uuid, PatchBukkitWorld::new);
     }
 
+    public static PatchBukkitWorld getOrCreate(String uuid) {
+        return getOrCreate(UUID.fromString(uuid));
+    }
 
     @Override
     public boolean isVoidDamageEnabled() {

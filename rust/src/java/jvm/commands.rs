@@ -1,14 +1,12 @@
-use std::{
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
+use std::{path::PathBuf, sync::Arc};
 
 use anyhow::Result;
-use j4rs::Instance;
-use pumpkin::plugin::Context;
+use pumpkin::{command::dispatcher::CommandError, plugin::Context};
+use pumpkin_protocol::java::client::play::CommandSuggestion;
 use tokio::sync::{mpsc, oneshot};
+use uuid::Uuid;
 
-use crate::{events::Event, java::jvm::command_executor::SimpleCommandSender};
+use crate::{commands::SimpleCommandSender, events::handler::PatchBukkitEvent};
 
 pub enum LoadPluginResult {
     SuccessfullyLoadedSpigot,
@@ -24,6 +22,7 @@ pub enum JvmCommand {
         j4rs_path: PathBuf,
         respond_to: oneshot::Sender<Result<()>>,
         context: Arc<Context>,
+        command_tx: mpsc::Sender<JvmCommand>,
     },
     LoadPlugin {
         plugin_path: PathBuf,
@@ -43,14 +42,51 @@ pub enum JvmCommand {
     Shutdown {
         respond_to: oneshot::Sender<Result<()>>,
     },
-    TriggerEvent {
-        event: Event,
-        respond_to: oneshot::Sender<Result<Event>>,
+    FireEvent {
+        patchbukkit_event: PatchBukkitEvent,
+        plugin: String,
+        respond_to: oneshot::Sender<bool>, // true = cancelled
     },
     TriggerCommand {
-        cmd_name: String,
+        full_command: String,
         command_sender: SimpleCommandSender,
-        respond_to: oneshot::Sender<Result<Event>>,
-        command: Arc<Mutex<Instance>>,
+        respond_to: oneshot::Sender<Result<()>>,
     },
+    GetCommandTabComplete {
+        command_sender: SimpleCommandSender,
+        full_command: String,
+        respond_to: oneshot::Sender<Result<Option<Vec<CommandSuggestion>>, CommandError>>,
+        location: Option<Location>,
+    },
+}
+
+pub struct Rotation {
+    pub yaw: f32,
+    pub pitch: f32,
+}
+
+impl Rotation {
+    pub fn new(yaw: f32, pitch: f32) -> Self {
+        Rotation { yaw, pitch }
+    }
+}
+
+pub struct Location {
+    pub world: Uuid,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub rotation: Option<Rotation>,
+}
+
+impl Location {
+    pub fn new(world: Uuid, x: f64, y: f64, z: f64, rotation: Option<Rotation>) -> Self {
+        Location {
+            world,
+            x,
+            y,
+            z,
+            rotation,
+        }
+    }
 }
